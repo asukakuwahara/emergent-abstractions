@@ -51,7 +51,7 @@ if not args.zero_shot:
                        sample_context=args.sample_context,
                        granularity=args.granularity,
                        shared_context=args.shared_context,
-                       hierarchical=True)
+                       hierarchical=args.hierarchical)
 
     if data_set.granularity == 'mixed' or data_set.granularity == None:
         path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_sf' +
@@ -78,7 +78,7 @@ else:
                                zero_shot=True,
                                zero_shot_test=cond,
                                granularity=args.granularity,
-                               hierarchical=True)
+                               hierarchical=args.hierarchical)
             if data_set.granularity == 'mixed' or data_set.granularity == None:
                 path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_' +
                         str(cond) + '_sf' + str(args.scaling_factor) + '.ds')
@@ -96,8 +96,7 @@ else:
                            zero_shot=True,
                            zero_shot_test=args.zero_shot_test,
                            granularity=args.granularity,
-                           hierarchical=True)
-
+                           hierarchical=args.hierarchical)
         if data_set.granularity == 'mixed' or data_set.granularity == None:
             path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_' +
                     str(args.zero_shot_test) + '_sf' + str(args.scaling_factor) + '.ds')
