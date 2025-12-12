@@ -34,3 +34,6 @@ dataset/image_concept_dataset
 .idea/misc.xml
 .idea/modules.xml
 .vscode/launch.json
+
+results/
+*.pkl
