@@ -19,7 +19,7 @@ class DataSet(torch.utils.data.Dataset):
 
     def __init__(self, properties_dim=[3, 3, 3], game_size=10, scaling_factor=10, device='cuda', testing=False,
                  zero_shot=False, zero_shot_test=None, sample_context=False, granularity="mixed", is_shapes3d=False,
-                 images=[], labels=[], shared_context=False):
+                 images=[], labels=[], shared_context=False, hierarchical=False):
         """
         properties_dim: vector that defines how many attributes and features per attributes the dataset should contain,
         defaults to a 3x3x3 dataset
@@ -34,6 +34,7 @@ class DataSet(torch.utils.data.Dataset):
         self.sample_context = sample_context
         self.granularity = granularity
         self.shared_context = shared_context
+        self.hierarchical = hierarchical
 
         # check if granularity has one of the allowed values
         if granularity not in ["mixed", "fine", "coarse"]:
@@ -490,7 +491,7 @@ class DataSet(torch.utils.data.Dataset):
             objects: a list with all object-tuples that satisfy the concept
             fixed: a tuple that denotes how many and which attributes are fixed
         """
-        fixed_vectors = self.get_fixed_vectors(self.properties_dim)
+        fixed_vectors = self.get_fixed_vectors(self.properties_dim, self.hierarchical)
         # create all possible concepts
         all_fixed_object_pairs = list(itertools.product(self.all_objects, fixed_vectors))
 
@@ -626,23 +627,45 @@ class DataSet(torch.utils.data.Dataset):
         return satisfied
 
     @staticmethod
-    def get_fixed_vectors(properties_dim):
+    def get_fixed_vectors(properties_dim, hierarchical):
         """
         Returns all possible fixed vectors for a given dataset size.
         Fixed vectors are vectors of length len(properties_dim), where 1 denotes that an attribute is fixed, 0 that it isn't.
         The more attributes are fixed, the more specific the concept -- the less attributes fixed, the more generic the concept.
         """
-        # what I want to get: [(1,0,0), (0,1,0), (0,0,1)] for most generic
-        # concrete: [(1,1,0), (0,1,1), (1,0,1)]
-        # most concrete: [(1,1,1)]
-        # for variable dataset sizes
+        if hierarchical:
+            # Hierarchical: One path from generic to specific
+            # Example for 3 attributes:
+            #   (0,0,1) - most generic: 1 fixed attribute
+            #   (0,1,1) - medium: 2 fixed attributes
+            #   (1,1,1) - most specific: 3 fixed attributes
+            # Attributes are added progressively (no sideways jumps)
+            n_attributes = len(properties_dim)
+            fixed_vectors = []
+            for level in range(1, n_attributes + 1):
+                # fill the fixed vector with 0 to initialize
+                fixed = [0] * n_attributes
+                for i in range(level):
+                    # fill the values from the last index
+                    fixed[n_attributes - 1 - i] = 1
+                fixed_vectors.append(tuple(fixed))        
+            return fixed_vectors
 
-        # range(0,2) because I want [0,1] values for whether an attribute is fixed or not
-        list_of_dim = [range(0, 2) for dim in properties_dim]
-        fixed_vectors = list(itertools.product(*list_of_dim))
-        # remove first element (0,..,0) as one attribute always has to be fixed
-        fixed_vectors.pop(0)
-        return fixed_vectors
+        else:
+            # Non-hierarchical: All possible combinations
+            # Example for 3 attributes (7 total combinations):
+            #   Generic (1 fixed): (1,0,0), (0,1,0), (0,0,1)
+            #   Medium (2 fixed): (1,1,0), (1,0,1), (0,1,1)
+            #   Specific (3 fixed): (1,1,1)
+            # Any combination is allowed (sideways jumps possible)
+            
+            # range(0,2) because I want [0,1] values for whether an attribute is fixed or not
+            list_of_dim = [range(0, 2) for dim in properties_dim]
+            fixed_vectors = list(itertools.product(*list_of_dim))
+
+            # remove first element (0,..,0) as one attribute always has to be fixed
+            fixed_vectors.pop(0)
+            return fixed_vectors
 
     @staticmethod
     def get_all_objects_for_a_concept(properties_dim, features, fixed):
