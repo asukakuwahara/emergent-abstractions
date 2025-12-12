@@ -154,6 +154,7 @@ def train(opts, datasets, verbose_callbacks=False):
     Train function completely copied from hierarchical_reference_game.
     """
 
+    opts.dataset_name = opts.load_dataset
     if opts.save:
         if not opts.test_rsa and not opts.save_test_interactions and not opts.zero_shot:
             # make folder for new run
@@ -366,6 +367,7 @@ def main(params):
     Dealing with parameters and loading dataset. Copied from hierarchical_reference_game and adapted.
     """
     opts = get_params(params)
+    opts.dataset_name = opts.load_dataset
 
     # NOTE: I checked and the default device seems to be cuda
     # Otherwise there is an option in a later pytorch version (don't know about compatibility with egg):
