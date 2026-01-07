@@ -359,8 +359,8 @@ def plot_training_trajectory(results_train,
             plt.plot(range(0, n_epochs, steps[1]), np.transpose(results_val[i]), color='red')
             plt.legend(['train', 'val'])
             leg = plt.legend(['train', 'val'], fontsize=12)
-            leg.legendHandles[0].set_color('blue')
-            leg.legendHandles[1].set_color('red')
+            leg.legend_handles[0].set_color('blue')
+            leg.legend_handles[1].set_color('red')
         plt.title(titles[i], fontsize=13)
         plt.xlabel('epoch', fontsize=12)
         if loss_plot:
