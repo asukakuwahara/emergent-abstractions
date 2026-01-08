@@ -153,7 +153,7 @@ def train(opts, datasets, verbose_callbacks=False):
     """
     Train function completely copied from hierarchical_reference_game.
     """
-
+    opts.dataset_name = opts.load_dataset
     if opts.save:
         if not opts.test_rsa and not opts.save_test_interactions and not opts.zero_shot:
             # make folder for new run
@@ -313,7 +313,8 @@ def train(opts, datasets, verbose_callbacks=False):
         if opts.test_rsa:
             if opts.load_interaction:
                 # Load given interaction
-                interaction = torch.load(opts.interaction_path)
+                #interaction = torch.load(opts.interaction_path)
+                interaction = torch.load(opts.interaction_path, weights_only=False)
                 print("# loading interaction from", opts.interaction_path)
             # TODO: specify third case: either interactions are loaded, or the current interaction is used, or generate
             # utterances
@@ -366,6 +367,7 @@ def main(params):
     Dealing with parameters and loading dataset. Copied from hierarchical_reference_game and adapted.
     """
     opts = get_params(params)
+    opts.dataset_name = opts.load_dataset
 
     # NOTE: I checked and the default device seems to be cuda
     # Otherwise there is an option in a later pytorch version (don't know about compatibility with egg):
@@ -420,7 +422,8 @@ def main(params):
 
     # if name of precreated data set is given, load dataset
     if opts.load_dataset:
-        data_set = torch.load(opts.path + 'data/' + opts.load_dataset)
+        #data_set = torch.load(opts.path + 'data/' + opts.load_dataset, weights_only=False)
+        data_set = torch.load(opts.path + 'data/' + opts.load_dataset, weights_only=False)
         print('data loaded from: ' + 'data/' + opts.load_dataset)
         if not opts.zero_shot:
             # create subfolder if necessary

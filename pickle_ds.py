@@ -27,6 +27,8 @@ parser.add_argument('--granularity', type=str, default='mixed',
 parser.add_argument('--shared_context', type=bool, default=False,
                     help="If true, context is generated with specific shared attributes instead of all possible.")
 
+parser.add_argument('--hierarchical', type=bool, default=False, 
+                    help='If true, hierarchical dataset operation')
 args = parser.parse_args()
 
 # prepare folder for saving
@@ -48,14 +50,17 @@ if not args.zero_shot:
                        device='cpu',
                        sample_context=args.sample_context,
                        granularity=args.granularity,
-                       shared_context=args.shared_context)
+                       #shared_context=args.shared_context)
+                       shared_context=args.shared_context,
+                       hierarchical=args.hierarchical)
 
     if data_set.granularity == 'mixed' or data_set.granularity == None:
         path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_sf' +
-                str(args.scaling_factor) + '.ds')
+                #str(args.scaling_factor) + '.ds')
+                str(args.scaling_factor) + str('_hierarchical' if args.hierarchical else '')  +'.ds')
     else:
         path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_granularity_'
-                + str(args.granularity) + '_sf' + str(args.scaling_factor) + '.ds')
+                                + str(args.granularity) + '_sf' + str(args.scaling_factor) + str('_hierarchical' if args.hierarchical else '')  + '.ds')
 
     if args.save:
         with open(path, "wb") as f:
@@ -74,14 +79,16 @@ else:
                                sample_context=args.sample_context,
                                zero_shot=True,
                                zero_shot_test=cond,
-                               granularity=args.granularity)
+                               granularity=args.granularity,
+                               hierarchical=args.hierarchical)
             if data_set.granularity == 'mixed' or data_set.granularity == None:
                 path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_' +
-                        str(cond) + '_sf' + str(args.scaling_factor) + '.ds')
+                        #str(cond) + '_sf' + str(args.scaling_factor) + '.ds')
+                        str(cond) + '_sf' + str(args.scaling_factor) + str('_hierarchical' if args.hierarchical else '')  +'.ds')
             else:
                 path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_' +
-                        str(cond) + '_granularity_' + str(args.granularity) + '_sf' + str(args.scaling_factor) + '.ds')
-
+                        #str(cond) + '_granularity_' + str(args.granularity) + '_sf' + str(args.scaling_factor) + '.ds')
+                        str(cond) + '_granularity_' + str(args.granularity) + '_sf' + str(args.scaling_factor) + str('_hierarchical' if args.hierarchical else '')  +'.ds')
     else:
         data_set = DataSet(args.dimensions,
                            game_size=args.game_size,
@@ -91,14 +98,18 @@ else:
                            sample_context=args.sample_context,
                            zero_shot=True,
                            zero_shot_test=args.zero_shot_test,
-                           granularity=args.granularity)
+                           #granularity=args.granularity)
+                           granularity=args.granularity,
+                           hierarchical=args.hierarchical)
 
         if data_set.granularity == 'mixed' or data_set.granularity == None:
             path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_' +
-                    str(args.zero_shot_test) + '_sf' + str(args.scaling_factor) + '.ds')
+                    #str(args.zero_shot_test) + '_sf' + str(args.scaling_factor) + '.ds')
+                    str(args.zero_shot_test) + '_sf' + str(args.scaling_factor) + str('_hierarchical' if args.hierarchical else '')  + '.ds')
         else:
             path = ('data/dim(' + str(len(args.dimensions)) + ',' + str(args.dimensions[0]) + ')' + sample + '_' +
-                    str(args.zero_shot_test) + '_granularity_' + str(args.granularity) + '_sf' + str(args.scaling_factor)
+                    #str(args.zero_shot_test) + '_granularity_' + str(args.granularity) + '_sf' + str(args.scaling_factor)
+                    str(args.zero_shot_test) + '_granularity_' + str(args.granularity) + '_sf' + str(args.scaling_factor) + str('_hierarchical' if args.hierarchical else '') 
                     + '.ds')
 
         if args.save:

@@ -19,7 +19,9 @@ class DataSet(torch.utils.data.Dataset):
 
     def __init__(self, properties_dim=[3, 3, 3], game_size=10, scaling_factor=10, device='cuda', testing=False,
                  zero_shot=False, zero_shot_test=None, sample_context=False, granularity="mixed", is_shapes3d=False,
-                 images=[], labels=[], shared_context=False):
+                 #images=[], labels=[], shared_context=False):
+                 images=[], labels=[], shared_context=False, hierarchical=False):
+                
         """
         properties_dim: vector that defines how many attributes and features per attributes the dataset should contain,
         defaults to a 3x3x3 dataset
@@ -34,6 +36,7 @@ class DataSet(torch.utils.data.Dataset):
         self.sample_context = sample_context
         self.granularity = granularity
         self.shared_context = shared_context
+        self.hierarchical = hierarchical
 
         # check if granularity has one of the allowed values
         if granularity not in ["mixed", "fine", "coarse"]:
@@ -626,7 +629,8 @@ class DataSet(torch.utils.data.Dataset):
         return satisfied
 
     @staticmethod
-    def get_fixed_vectors(properties_dim):
+    #def get_fixed_vectors(properties_dim):
+    def get_fixed_vectors(properties_dim, hierarchical):
         """
         Returns all possible fixed vectors for a given dataset size.
         Fixed vectors are vectors of length len(properties_dim), where 1 denotes that an attribute is fixed, 0 that it isn't.
@@ -638,11 +642,44 @@ class DataSet(torch.utils.data.Dataset):
         # for variable dataset sizes
 
         # range(0,2) because I want [0,1] values for whether an attribute is fixed or not
-        list_of_dim = [range(0, 2) for dim in properties_dim]
-        fixed_vectors = list(itertools.product(*list_of_dim))
+        #list_of_dim = [range(0, 2) for dim in properties_dim]
+        #fixed_vectors = list(itertools.product(*list_of_dim))
         # remove first element (0,..,0) as one attribute always has to be fixed
-        fixed_vectors.pop(0)
-        return fixed_vectors
+        #fixed_vectors.pop(0)
+        #return fixed_vectors
+        if hierarchical:
+            # Hierarchical: One path from generic to specific
+            # Example for 3 attributes:
+            #   (0,0,1) - most generic: 1 fixed attribute
+            #   (0,1,1) - medium: 2 fixed attributes
+            #   (1,1,1) - most specific: 3 fixed attributes
+            # Attributes are added progressively (no sideways jumps)
+            n_attributes = len(properties_dim)
+            fixed_vectors = []
+            for level in range(1, n_attributes + 1):
+                # fill the fixed vector with 0 to initialize
+                fixed = [0] * n_attributes
+                for i in range(level):
+                    # fill the values from the last index
+                    fixed[n_attributes - 1 - i] = 1
+                fixed_vectors.append(tuple(fixed))        
+            return fixed_vectors
+
+        else:
+            # Non-hierarchical: All possible combinations
+            # Example for 3 attributes (7 total combinations):
+            #   Generic (1 fixed): (1,0,0), (0,1,0), (0,0,1)
+            #   Medium (2 fixed): (1,1,0), (1,0,1), (0,1,1)
+            #   Specific (3 fixed): (1,1,1)
+            # Any combination is allowed (sideways jumps possible)
+
+            # range(0,2) because I want [0,1] values for whether an attribute is fixed or not
+            list_of_dim = [range(0, 2) for dim in properties_dim]
+            fixed_vectors = list(itertools.product(*list_of_dim))
+
+            # remove first element (0,..,0) as one attribute always has to be fixed
+            fixed_vectors.pop(0)
+            return fixed_vectors
 
     @staticmethod
     def get_all_objects_for_a_concept(properties_dim, features, fixed):
@@ -786,3 +823,35 @@ def get_distractors_old(self, concept_idx):
             [(self.get_all_objects_for_a_concept(self.properties_dim, dist_concept[0], fixed), tuple(dist_concept[1]))])
 
     return distractor_objects
+
+
+"""if __name__ == "__main__":
+    print("=== Testing Updated Hierarchical Function ===")
+    
+    # Test
+    result = DataSet.get_fixed_vectors([4,4,4])  # DataSet (büyük D ve S) olarak değiştir
+    print("3 attributes:", result)
+    print("Success!" if result == [(1,0,0), (1,1,0), (1,1,1)] else "Failed!")
+    
+    print("\n=== Additional Tests ===")
+    
+    # Test 2: 4 attributes
+    result2 = DataSet.get_fixed_vectors([4,4,4,4])
+    print("4 attributes:", result2)
+    expected2 = [(1,0,0,0), (1,1,0,0), (1,1,1,0), (1,1,1,1)]
+    print("Success!" if result2 == expected2 else "Failed!")
+    
+    # Test 3: 5 attributes
+    result3 = DataSet.get_fixed_vectors([3,3,3,3,3])
+    print("5 attributes:", result3)
+
+
+OUTPUT
+=== Testing Updated Hierarchical Function ===
+3 attributes: [(1, 0, 0), (1, 1, 0), (1, 1, 1)]
+Success!
+
+=== Additional Tests ===
+4 attributes: [(1, 0, 0, 0), (1, 1, 0, 0), (1, 1, 1, 0), (1, 1, 1, 1)]
+Success!
+5 attributes: [(1, 0, 0, 0, 0), (1, 1, 0, 0, 0), (1, 1, 1, 0, 0), (1, 1, 1, 1, 0), (1, 1, 1, 1, 1)]""" 
